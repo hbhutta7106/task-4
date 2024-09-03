@@ -9,13 +9,15 @@ class ProfileCard extends StatelessWidget {
       required this.email,
       required this.onTap,
       required this.onImportPress,
-      required this.delete});
+      required this.delete,
+      required this.requireImportButton});
   final String imagePath;
   final String name;
   final String email;
   final VoidCallback onTap;
   final VoidCallback onImportPress;
   final VoidCallback delete;
+  final bool requireImportButton;
 
   @override
   Widget build(BuildContext context) {
@@ -73,24 +75,33 @@ class ProfileCard extends StatelessWidget {
                   onPressed: onImportPress,
                   style: const ButtonStyle(
                       backgroundColor: WidgetStatePropertyAll(Colors.amber)),
-                  child: const Text(
-                    "Import",
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: requireImportButton == true
+                      ? const Text(
+                          "Import",
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      : const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(
+                            Icons.edit,
+                            color: Colors.black,
+                          ),
+                        ),
                 ),
               ],
             ),
-            Container(
-              padding: const EdgeInsets.all(5.0),
-              child: IconButton(
-                onPressed: delete,
-                icon: const Icon(
-                  CupertinoIcons.delete,
-                  size: 30,
+            if (requireImportButton == false)
+              Container(
+                padding: const EdgeInsets.all(5.0),
+                child: IconButton(
+                  onPressed: delete,
+                  icon: const Icon(
+                    CupertinoIcons.delete,
+                    size: 30,
+                  ),
+                  color: Colors.grey[500],
                 ),
-                color: Colors.grey[500],
-              ),
-            )
+              )
           ],
         ),
       ),

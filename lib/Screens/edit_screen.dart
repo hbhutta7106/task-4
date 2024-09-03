@@ -3,19 +3,20 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:task_4/Models/User/user.dart';
 import 'package:task_4/repository/userRepo.dart';
 
-class EditScreen extends StatefulWidget {
+class EditScreen extends ConsumerStatefulWidget {
   const EditScreen({super.key, required this.userProfile});
   final UserProfile userProfile;
 
   @override
-  State<EditScreen> createState() => _EditScreenState();
+  ConsumerState<EditScreen> createState() => _EditScreenState();
 }
 
-class _EditScreenState extends State<EditScreen> {
+class _EditScreenState extends ConsumerState<EditScreen> {
   pickImageFromGallery(BuildContext context) async {
     XFile? pickedFile =
         await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -24,13 +25,25 @@ class _EditScreenState extends State<EditScreen> {
         imageFile = File(pickedFile.path);
       });
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("No image is Selected")));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("No image is Selected")));
+      }
     }
+  }
+
+  void disposeControllers() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    emailController.dispose();
+    phoneNocontroller.dispose();
+    passwordController.dispose();
+    imageFile = null;
   }
 
   File? imageFile;
   String? uploadedImageUrl;
+  bool isLoading = false;
   final _formkey = GlobalKey<FormState>();
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
@@ -58,16 +71,18 @@ class _EditScreenState extends State<EditScreen> {
         setState(() {
           uploadedImageUrl = downloadImageUrl;
         });
-      } 
+      }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            " Error in Image Upload $error",
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              " Error in Image Upload $error",
+            ),
+            duration: const Duration(seconds: 2),
           ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+        );
+      }
     }
   }
 
@@ -279,20 +294,29 @@ class _EditScreenState extends State<EditScreen> {
                             style: const ButtonStyle(
                                 backgroundColor:
                                     WidgetStatePropertyAll(Colors.amber)),
-                            onPressed: () {
-                              uploadImageInFireBase();
-                              UserRepository.updateUserInfo(
-                                  widget.userProfile,
-                                  widget.userProfile.email!,
-                                  firstNameController.text,
-                                  lastNameController.text,
-                                  emailController.text,
-                                  phoneNocontroller.text.toString(),
-                                  passwordController.text.toString(),
-                                  uploadedImageUrl,
-                                  context);
+                            onPressed: () async {
+                              setState(() {
+                                isLoading = true;
+                              });
+                              await uploadImageInFireBase();
+                              UserProfile? user =
+                                  await UserRepository.updateUserInfo(
+                                      widget.userProfile,
+                                      widget.userProfile.email!,
+                                      firstNameController.text,
+                                      lastNameController.text,
+                                      emailController.text,
+                                      phoneNocontroller.text.toString(),
+                                      passwordController.text.toString(),
+                                      uploadedImageUrl,
+                                      ref,
+                                      context);
+                              setState(() {
+                                isLoading = false;
+                                disposeControllers();
+                              });
                             },
-                            child: const Text("Update Profile"),
+                            child:isLoading==true?const CircularProgressIndicator():const Text("Update Profile"),
                           ),
                         ),
                       ],

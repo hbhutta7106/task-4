@@ -159,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           ClipOval(
                             child: Image.network(
-                              widget.userProfile.picture!.medium!,
+                              widget.userProfile.picture!.thumbnail!,
                               height: 100,
                               width: 100,
                               fit: BoxFit.cover,

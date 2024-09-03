@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:task_4/Screens/alluser.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:task_4/Screens/navigation.dart';
 import 'package:task_4/firebase_options.dart';
 
 void main() async {
@@ -8,7 +9,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(
+   const ProviderScope(
+      child: MyApp(),
+    )
+    );
 }
 
 class MyApp extends StatelessWidget {
@@ -23,7 +28,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const AllUserScreen(),
+      home: const NavigationScreen(),
     );
   }
 }

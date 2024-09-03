@@ -1,7 +1,8 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:task_4/Models/User/user.dart';
+import 'package:task_4/provider/user-notifier-provider.dart';
 
 class UserRepository {
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -9,26 +10,29 @@ class UserRepository {
   static addUserToFirebase(UserProfile user, BuildContext context) async {
     try {
       await firestore.collection('Users').add(user.toMap());
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("User inserted successfully :"),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            " Error, $error",
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("User inserted successfully :"),
+            duration: Duration(seconds: 2),
           ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              " Error, $error",
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
-  static updateUserInfo(
+  static Future<UserProfile?> updateUserInfo(
       UserProfile user,
       String email,
       String? firstName,
@@ -37,7 +41,9 @@ class UserRepository {
       String? updatedPhoneNo,
       String? passWord,
       String? imageUrl,
+      WidgetRef ref,
       BuildContext context) async {
+    UserProfile? newUser;
     try {
       QuerySnapshot<Map<String, dynamic>> allUsers = await firestore
           .collection("Users")
@@ -53,7 +59,7 @@ class UserRepository {
             firebaseWalaUser.login?.copyWith(password: passWord);
         var updatedProfile =
             firebaseWalaUser.picture?.copyWith(thumbnail: imageUrl);
-        UserProfile newUser = firebaseWalaUser.copyWith(
+        newUser = firebaseWalaUser.copyWith(
             name: updatedName,
             login: updatedPassword,
             email: updatedEmail,
@@ -63,41 +69,35 @@ class UserRepository {
             .collection('Users')
             .doc(userToUpdate.id)
             .update(newUser.toMap());
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              " User has been Updated Successfully",
+        ref
+            .read(userNotifierProvider.notifier)
+            .updateProfile(newUser, firebaseWalaUser);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                " User has been Updated Successfully",
+              ),
+              duration: Duration(seconds: 2),
             ),
-            duration: Duration(seconds: 2),
-          ),
-        );
+          );
+        }
+        return newUser;
       } else {
-        var updatedName = user.name?.copyWith(first: firstName, last: lastName);
-        var updatedPassword = user.login?.copyWith(password: passWord);
-        UserProfile updatedUser = user.copyWith(
-            name: updatedName,
-            email: updatedEmail,
-            phone: updatedPhoneNo,
-            login: updatedPassword);
-        await firestore.collection('Users').add(updatedUser.toMap());
+        return null;
+      }
+    } catch (error) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              " User has been Stored with updated Values",
+              " Error $error",
             ),
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            " Error $error",
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      return null;
     }
   }
 
@@ -108,23 +108,27 @@ class UserRepository {
         .get();
     if (userToDelete.docs.isNotEmpty) {
       await userToDelete.docs.first.reference.delete();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            " User Deleted Succesfully",
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              " User Deleted Succesfully",
+            ),
+            duration: Duration(seconds: 2),
           ),
-          duration: Duration(seconds: 2),
-        ),
-      );
+        );
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            " User cannot Found Please Import first",
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              " User cannot Found Please Import first",
+            ),
+            duration: Duration(seconds: 2),
           ),
-          duration: Duration(seconds: 2),
-        ),
-      );
+        );
+      }
     }
   }
 }
