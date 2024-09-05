@@ -1,91 +1,99 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:task_4/Models/User/user.dart';
 import 'package:task_4/Screens/edit_screen.dart';
+import 'package:task_4/provider/user_notifier_provider.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key, required this.userProfile});
-  final UserProfile userProfile;
+// ignore: must_be_immutable
+class ProfileScreen extends ConsumerStatefulWidget {
+  const ProfileScreen({
+    super.key,
+  });
+  // UserProfile userProfile;
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String? text;
   String? title;
   int selectedIndex = 0;
-  void onPressProfileButton() {
+  void onPressProfileButton(UserProfile userProfile) {
     setState(() {
-      selectedIndex = 0;
+      selectedIndex = 1;
       title = "My Name is";
       // ignore: prefer_interpolation_to_compose_strings
-      text = (widget.userProfile.name?.title ?? 'The value is null') +
+      text = (userProfile.name?.title ?? 'The value is null') +
           " " +
-          (widget.userProfile.name?.first ?? 'The value is null') +
+          (userProfile.name?.first ?? 'The value is null') +
           " " +
-          (widget.userProfile.name?.last ?? 'The value is null');
+          (userProfile.name?.last ?? 'The value is null');
     });
   }
 
   @override
   void initState() {
-    selectedIndex = 0;
+    selectedIndex = 1;
     super.initState();
-    title = "My Name is ";
-    // ignore: prefer_interpolation_to_compose_strings
-    text = (widget.userProfile.name?.title ?? 'The value is null') +
-        " " +
-        (widget.userProfile.name?.first ?? 'The value is null') +
-        " " +
-        (widget.userProfile.name?.last ?? 'The value is null');
+
+    // title = "My Name is ";
+    // // ignore: prefer_interpolation_to_compose_strings
+    // text = (widget.userProfile.name?.title ?? 'The value is null') +
+    //     " " +
+    //     (widget.userProfile.name?.first ?? 'The value is null') +
+    //     " " +
+    //     (widget.userProfile.name?.last ?? 'The value is null');
   }
 
-  void onPressEmailButton() {
+  void onPressEmailButton(UserProfile userProfile) {
     setState(() {
-      selectedIndex = 1;
+      selectedIndex = 6;
       title = "My Email is ";
-      text = widget.userProfile.email!;
+      text = userProfile.email!;
     });
   }
 
-  void onPressBirthdayButton() {
+  void onPressBirthdayButton(UserProfile userProfile) {
     setState(() {
       selectedIndex = 2;
       title = "My Birthday is";
-      DateTime formatedDate = DateTime.parse(widget.userProfile.dob!.date!);
+      DateTime formatedDate = DateTime.parse(userProfile.dob!.date!);
       text = DateFormat('yyyy/MM/dd').format(formatedDate);
     });
   }
 
-  void onPressLocationButton() {
+  void onPressLocationButton(UserProfile userProfile) {
     setState(() {
       selectedIndex = 3;
       title = "Location points are";
       // ignore: prefer_interpolation_to_compose_strings
-      text = widget.userProfile.location!.coordinates!.latitude!.toString() +
+      text = userProfile.location!.coordinates!.latitude!.toString() +
           " " +
-          widget.userProfile.location!.coordinates!.longitude!.toString();
+          userProfile.location!.coordinates!.longitude!.toString();
     });
   }
 
-  void onPressPhoneButton() {
+  void onPressPhoneButton(UserProfile userProfile) {
     setState(() {
       selectedIndex = 4;
       title = "My phone Number is ";
-      text = widget.userProfile.phone!;
+      text = userProfile.phone!;
     });
   }
 
-  void onPressLockButton() {
+  void onPressLockButton(UserProfile userProfile) {
     setState(() {
       selectedIndex = 5;
       title = 'My Password is';
-      text = widget.userProfile.login!.password!;
+      text = userProfile.login!.password!;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    UserProfile userProfile = ref.watch(userModelNotifierProvider);
+
     return Scaffold(
         appBar: AppBar(
           title: const Text("Profile Screen"),
@@ -137,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
                           return EditScreen(
-                            userProfile: widget.userProfile,
+                            userProfile: userProfile,
                           );
                         }));
                       },
@@ -159,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           ClipOval(
                             child: Image.network(
-                              widget.userProfile.picture!.thumbnail!,
+                              userProfile.picture!.thumbnail!,
                               height: 100,
                               width: 100,
                               fit: BoxFit.cover,
@@ -168,23 +176,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(
                             height: 15,
                           ),
-                          Text(
-                            title!,
-                            style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: Color.fromRGBO(39, 39, 39, 0.5)),
-                          ),
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          Text(
-                            // ignore: prefer_interpolation_to_compose_strings
-                            text!,
-                            style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: Color.fromRGBO(39, 39, 39, 1)),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            width: 250,
+                            child: Column(children: [
+                              Text(
+                                selectedIndex == 1 ? "My Name is" : title!,
+                                style: const TextStyle(
+                                    overflow: TextOverflow.ellipsis,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color.fromRGBO(39, 39, 39, 0.5)),
+                              ),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Text(
+                                selectedIndex == 1
+                                    // ignore: prefer_interpolation_to_compose_strings
+                                    ? (userProfile.name?.title ??
+                                            'The value is null') +
+                                        " " +
+                                        (userProfile.name?.first ??
+                                            'The value is null') +
+                                        " " +
+                                        (userProfile.name?.last ??
+                                            'The value is null')
+                                    : text!,
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    overflow: TextOverflow.ellipsis,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color.fromRGBO(39, 39, 39, 1)),
+                              ),
+                            ]),
                           ),
                           const SizedBox(
                             height: 80,
@@ -195,42 +220,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Row(
                               children: [
                                 IconButton(
-                                  onPressed: onPressProfileButton,
+                                  onPressed: () =>
+                                      onPressProfileButton(userProfile),
                                   icon: const Icon(
                                     Icons.person_2_outlined,
                                     size: 40,
                                   ),
                                 ),
                                 IconButton(
-                                  onPressed: onPressEmailButton,
+                                  onPressed: () =>
+                                      onPressEmailButton(userProfile),
                                   icon: const Icon(
                                     Icons.mail,
                                     size: 40,
                                   ),
                                 ),
                                 IconButton(
-                                  onPressed: onPressBirthdayButton,
+                                  onPressed: () =>
+                                      onPressBirthdayButton(userProfile),
                                   icon: const Icon(
                                     Icons.list_alt,
                                     size: 40,
                                   ),
                                 ),
                                 IconButton(
-                                  onPressed: onPressLocationButton,
+                                  onPressed: () =>
+                                      onPressLocationButton(userProfile),
                                   icon: const Icon(
                                     Icons.location_on,
                                     size: 40,
                                   ),
                                 ),
                                 IconButton(
-                                  onPressed: onPressPhoneButton,
+                                  onPressed: () =>
+                                      onPressPhoneButton(userProfile),
                                   icon: const Icon(
                                     Icons.phone,
                                     size: 40,
                                   ),
                                 ),
                                 IconButton(
-                                  onPressed: onPressLockButton,
+                                  onPressed: () =>
+                                      onPressLockButton(userProfile),
                                   icon: const Icon(
                                     Icons.lock,
                                     size: 35,

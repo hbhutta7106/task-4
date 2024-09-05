@@ -8,26 +8,23 @@ class ApiUserNotifier extends StateNotifier<List<UserProfile>> {
     getallUsers();
   }
 
-  Future<List<UserProfile>?> getallUsers() async {
-    List<UserProfile>? users = [];
+  Future<void> getallUsers() async {
+   
     try {
       final url = Uri.https('randomuser.me', '/api/', {'results': '100'});
       var response = await http.get(url);
       if (response.statusCode == 200) {
         var decodedObject = jsonDecode(response.body);
         var results = decodedObject['results'] as List<dynamic>;
-        users = results.map((value) {
+        var users = results.map((value) {
           return UserProfile.fromJson(value);
         }).toList();
         state = users;
-        return users;
-      } else {
-        users = null;
-        return users;
+     
       }
     } catch (e) {
       print(e);
-      return [];
+  
     }
   }
 }

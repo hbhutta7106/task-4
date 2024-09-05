@@ -30,7 +30,12 @@ class UserNotifier extends StateNotifier<List<UserProfile>> {
   }
 
   void addUser(UserProfile user) {
-    state = [...state, user];
+    if(!state.contains(user))
+    {
+state = [...state, user];
+    }
+
+    
   }
 
   void updateProfile(UserProfile newUser, UserProfile oldUser) {

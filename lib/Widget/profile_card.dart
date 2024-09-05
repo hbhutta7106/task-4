@@ -38,8 +38,9 @@ class ProfileCard extends StatelessWidget {
                 ClipOval(
                   child: Image.network(
                     imagePath,
-                    height: 70,
-                    width: 70,
+                    height: 65,
+                    width: 65,
+                    fit: BoxFit.cover,
                   ),
                 ),
                 const SizedBox(
@@ -81,7 +82,7 @@ class ProfileCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         )
                       : const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          padding: EdgeInsets.symmetric(horizontal: 2.0),
                           child: Icon(
                             Icons.edit,
                             color: Colors.black,
@@ -97,7 +98,7 @@ class ProfileCard extends StatelessWidget {
                   onPressed: delete,
                   icon: const Icon(
                     CupertinoIcons.delete,
-                    size: 30,
+                    size: 25,
                   ),
                   color: Colors.grey[500],
                 ),

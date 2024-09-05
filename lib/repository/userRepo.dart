@@ -2,21 +2,35 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:task_4/Models/User/user.dart';
-import 'package:task_4/provider/user-notifier-provider.dart';
+import 'package:task_4/provider/user_notifier_provider.dart';
 
 class UserRepository {
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   static addUserToFirebase(UserProfile user, BuildContext context) async {
     try {
-      await firestore.collection('Users').add(user.toMap());
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("User inserted successfully :"),
-            duration: Duration(seconds: 2),
-          ),
-        );
+      QuerySnapshot<Map<String, dynamic>> allUsers = await firestore
+          .collection("Users")
+          .where('email', isEqualTo: user.email)
+          .limit(1)
+          .get();
+      final List<DocumentSnapshot> userDocuments = allUsers.docs;
+      if (userDocuments.isNotEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('User already exists!'),
+          ));
+        }
+      } else {
+        await firestore.collection('Users').add(user.toMap());
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("User inserted successfully :"),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       }
     } catch (error) {
       if (context.mounted) {

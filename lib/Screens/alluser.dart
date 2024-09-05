@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:task_4/Models/User/user.dart';
 import 'package:task_4/Widget/profile_card.dart';
-import 'package:task_4/provider/user-notifier-provider.dart';
+import 'package:task_4/provider/user_notifier_provider.dart';
 import 'package:task_4/repository/userrepo.dart';
 
 class AllUserScreen extends ConsumerWidget {

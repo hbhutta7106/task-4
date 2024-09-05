@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:task_4/Models/User/user.dart';
+import 'package:task_4/provider/user_notifier_provider.dart';
 import 'package:task_4/repository/userRepo.dart';
 
+// ignore: must_be_immutable
 class EditScreen extends ConsumerStatefulWidget {
-  const EditScreen({super.key, required this.userProfile});
-  final UserProfile userProfile;
+  EditScreen({super.key, required this.userProfile});
+  UserProfile userProfile;
 
   @override
   ConsumerState<EditScreen> createState() => _EditScreenState();
@@ -32,14 +34,7 @@ class _EditScreenState extends ConsumerState<EditScreen> {
     }
   }
 
-  void disposeControllers() {
-    firstNameController.dispose();
-    lastNameController.dispose();
-    emailController.dispose();
-    phoneNocontroller.dispose();
-    passwordController.dispose();
-    imageFile = null;
-  }
+  
 
   File? imageFile;
   String? uploadedImageUrl;
@@ -90,6 +85,7 @@ class _EditScreenState extends ConsumerState<EditScreen> {
   String? imageUrl;
   @override
   Widget build(BuildContext context) {
+    widget.userProfile = ref.watch(userModelNotifierProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text("Edit Screen"),
@@ -298,6 +294,7 @@ class _EditScreenState extends ConsumerState<EditScreen> {
                               setState(() {
                                 isLoading = true;
                               });
+
                               await uploadImageInFireBase();
                               UserProfile? user =
                                   await UserRepository.updateUserInfo(
@@ -311,12 +308,22 @@ class _EditScreenState extends ConsumerState<EditScreen> {
                                       uploadedImageUrl,
                                       ref,
                                       context);
+                              if (user != null) {
+                                ref
+                                    .read(userModelNotifierProvider.notifier)
+                                    .updateUser(user);
+                              }
+
                               setState(() {
                                 isLoading = false;
-                                disposeControllers();
                               });
+                              Navigator.of(context).pop();
+                              imageFile = null;
+                              imageUrl = null;
                             },
-                            child:isLoading==true?const CircularProgressIndicator():const Text("Update Profile"),
+                            child: isLoading == true
+                                ? const CircularProgressIndicator()
+                                : const Text("Update Profile"),
                           ),
                         ),
                       ],
