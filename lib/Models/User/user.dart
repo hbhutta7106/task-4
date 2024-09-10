@@ -30,6 +30,18 @@ class UserProfile {
     this.picture,
     this.nat,
   });
+  
+
+// factory UserProfile.fromSqlite(Map<String,dynamic> map)
+// {
+//   return UserProfile(
+//     email: map['email'],
+//     gender: map['gender'],
+//     name: map['name']
+
+//   )
+// }
+
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -95,9 +107,6 @@ class UserProfile {
     return result;
   }
 
-
- 
-
   UserProfile copyWith({
     String? gender,
     Name? name,
@@ -127,6 +136,10 @@ class UserProfile {
       nat: nat ?? this.nat,
     );
   }
+
+ 
+
+
 }
 
 class Id {

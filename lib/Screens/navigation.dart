@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:task_4/Screens/alluser.dart';
 import 'package:task_4/Screens/firebaseuser.dart';
+import 'package:task_4/Screens/sqflite_users.dart';
 import 'package:task_4/constants.dart';
 
 class NavigationScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   List<Widget> pages = const [
     AllUserScreen(),
     FirebaseUsersScreen(),
+    SqfliteScreen(),
   ];
   int selectedIndex = 1;
 
@@ -23,7 +25,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
       appBar: AppBar(
         title: selectedIndex == 0
             ? const Text("Users")
-            : const Text("Firebase Users"),
+            :selectedIndex==1? const Text("Firebase Users"):selectedIndex==2 ?const Text("Sqlite Users"):const Text("Null"),
         backgroundColor: Colors.blue[400],
         centerTitle: true,
       ),
@@ -61,6 +63,18 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 size: 25,
               ),
               label: "Firebase Users"),
+              BottomNavigationBarItem(
+              activeIcon: const Icon(
+                Icons.storage,
+                color: Colors.blue,
+                size: 25,
+              ),
+              icon: Icon(
+                Icons.storage,
+                color: selectedIndex == 2 ? Colors.blue : lightTextColor,
+                size: 25,
+              ),
+              label: "Sqflite Users"),
         ],
       ),
     );

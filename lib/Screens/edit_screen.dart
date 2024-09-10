@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_storage/firebase_storage.dart';
@@ -6,13 +7,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:task_4/Models/User/user.dart';
+import 'package:task_4/Screens/map_screen.dart';
+import 'package:task_4/Service/database.dart';
 import 'package:task_4/provider/user_notifier_provider.dart';
-import 'package:task_4/repository/userRepo.dart';
+import 'package:task_4/repository/user_repo.dart';
 
 // ignore: must_be_immutable
 class EditScreen extends ConsumerStatefulWidget {
-  EditScreen({super.key, required this.userProfile});
-  UserProfile userProfile;
+  const EditScreen({super.key, required this.number});
+  final int number;
 
   @override
   ConsumerState<EditScreen> createState() => _EditScreenState();
@@ -34,8 +37,6 @@ class _EditScreenState extends ConsumerState<EditScreen> {
     }
   }
 
-  
-
   File? imageFile;
   String? uploadedImageUrl;
   bool isLoading = false;
@@ -45,14 +46,29 @@ class _EditScreenState extends ConsumerState<EditScreen> {
   TextEditingController emailController = TextEditingController();
   TextEditingController phoneNocontroller = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  TextEditingController latitueController = TextEditingController();
+  TextEditingController longitudeCOntroller = TextEditingController();
+  TextEditingController latLngController = TextEditingController();
+
   @override
   void initState() {
+    UserProfile userProfile = ref.read(userModelNotifierProvider);
     super.initState();
-    firstNameController.text = widget.userProfile.name!.first!;
-    lastNameController.text = widget.userProfile.name!.last!;
-    emailController.text = widget.userProfile.email!;
-    phoneNocontroller.text = widget.userProfile.phone!;
-    passwordController.text = widget.userProfile.login!.password!;
+    controllersText(userProfile);
+  }
+
+  void controllersText(UserProfile userProfile) {
+    firstNameController.text = userProfile.name!.first!;
+    lastNameController.text = userProfile.name!.last!;
+    emailController.text = userProfile.email!;
+    phoneNocontroller.text = userProfile.phone!;
+    passwordController.text = userProfile.login!.password!;
+    latitueController.text =
+        userProfile.location!.coordinates!.latitude.toString();
+    longitudeCOntroller.text =
+        userProfile.location!.coordinates!.longitude.toString();
+    latLngController.text =
+        "${latitueController.text},${longitudeCOntroller.text}";
   }
 
   uploadImageInFireBase() async {
@@ -81,11 +97,48 @@ class _EditScreenState extends ConsumerState<EditScreen> {
     }
   }
 
+  bool checkNetworkImage(String imageUrl) {
+    return imageUrl.startsWith('http');
+  }
+
+  bool checkImageIsBase64Encode(String imageUrl) {
+    if (imageUrl.startsWith('/')) {
+      return true;
+    }
+    return false;
+  }
+
+  void getLatLngFromTextField(String line) {
+    if (line.contains(',')) {
+      List<String> values = line.split(',');
+      if (values.length == 2) {
+        setState(() {
+          latitudeValue = values[0];
+          longitudeValue = values[1];
+          latitueController.text = values[0];
+          longitudeCOntroller.text = values[1];
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Invalid Input, More then one Comma Found"),
+          duration: Duration(seconds: 2),
+        ));
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("invalid Values"),
+        duration: Duration(seconds: 2),
+      ));
+    }
+  }
+
+  String? latitudeValue;
+  String? longitudeValue;
   bool isHide = true;
   String? imageUrl;
   @override
   Widget build(BuildContext context) {
-    widget.userProfile = ref.watch(userModelNotifierProvider);
+    UserProfile userProfile = ref.watch(userModelNotifierProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text("Edit Screen"),
@@ -121,10 +174,23 @@ class _EditScreenState extends ConsumerState<EditScreen> {
                           borderRadius: BorderRadius.circular(100),
                         ),
                         child: ClipOval(
-                          child: Image.network(
-                            widget.userProfile.picture!.thumbnail!,
-                            fit: BoxFit.cover,
-                          ),
+                          child: checkNetworkImage(
+                                  userProfile.picture!.thumbnail!)
+                              ? Image.network(
+                                  userProfile.picture!.thumbnail!,
+                                  fit: BoxFit.cover,
+                                )
+                              : checkImageIsBase64Encode(
+                                      userProfile.picture!.thumbnail!)
+                                  ? Image.memory(
+                                      base64Decode(
+                                          userProfile.picture!.thumbnail!),
+                                      height: 100,
+                                      width: 100,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.file(
+                                      File(userProfile.picture!.thumbnail!)),
                         ),
                       ),
                 const SizedBox(
@@ -143,7 +209,6 @@ class _EditScreenState extends ConsumerState<EditScreen> {
                 ),
                 Form(
                   key: _formkey,
-                  autovalidateMode: AutovalidateMode.always,
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
@@ -227,7 +292,7 @@ class _EditScreenState extends ConsumerState<EditScreen> {
                           keyboardType: TextInputType.number,
                           controller: phoneNocontroller,
                           onSaved: (newValue) =>
-                              lastNameController.text = newValue!,
+                              phoneNocontroller.text = newValue!,
                           onChanged: (value) {
                             if (value.isNotEmpty) {}
                             return;
@@ -253,7 +318,7 @@ class _EditScreenState extends ConsumerState<EditScreen> {
                           controller: passwordController,
                           obscureText: isHide,
                           onSaved: (newValue) =>
-                              lastNameController.text = newValue!,
+                              passwordController.text = newValue!,
                           onChanged: (value) {
                             if (value.isNotEmpty) {}
                             return;
@@ -281,7 +346,50 @@ class _EditScreenState extends ConsumerState<EditScreen> {
                                       : Icons.lock_open))),
                         ),
                         const SizedBox(
-                          height: 20,
+                          height: 12,
+                        ),
+                        TextFormField(
+                          keyboardType: TextInputType.phone,
+                          initialValue:
+                              "${userProfile.location!.coordinates!.latitude},${userProfile.location!.coordinates!.longitude}",
+                          onSaved: (newValue) =>
+                              latLngController.text = newValue!,
+                          onChanged: (value) {
+                            if (value.isNotEmpty) {
+                              ref
+                                  .read(userModelNotifierProvider.notifier)
+                                  .updateLocationPoints(value);
+                            }
+                            return;
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Choose Location";
+                            } else {
+                              latLngController.text = value;
+                              ref
+                                  .read(userModelNotifierProvider.notifier)
+                                  .updateLocationPoints(value);
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
+                              label: const Text("Location"),
+                              hintText: "Choose Locataion from Map",
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.always,
+                              suffixIcon: IconButton(
+                                  onPressed: () {
+                                    Navigator.push(context,
+                                        MaterialPageRoute(builder: (context) {
+                                      return const MapScreeen();
+                                    }));
+                                  },
+                                  icon: const Icon(Icons.location_on))),
+                        ),
+                        const SizedBox(
+                          height: 12,
                         ),
                         SizedBox(
                           height: 60,
@@ -294,36 +402,88 @@ class _EditScreenState extends ConsumerState<EditScreen> {
                               setState(() {
                                 isLoading = true;
                               });
+                              if (widget.number == 0) {
+                                DatabaseService databaseService =
+                                    DatabaseService();
+                                int done = await databaseService
+                                    .updateDataInSqliteDatabase(
+                                        firstNameController.text,
+                                        lastNameController.text,
+                                        emailController.text,
+                                        phoneNocontroller.text,
+                                        passwordController.text,
+                                        latitueController.text,
+                                        longitudeCOntroller.text,
+                                        userProfile.login!.uuid!);
 
-                              await uploadImageInFireBase();
-                              UserProfile? user =
-                                  await UserRepository.updateUserInfo(
-                                      widget.userProfile,
-                                      widget.userProfile.email!,
-                                      firstNameController.text,
-                                      lastNameController.text,
-                                      emailController.text,
-                                      phoneNocontroller.text.toString(),
-                                      passwordController.text.toString(),
-                                      uploadedImageUrl,
-                                      ref,
-                                      context);
-                              if (user != null) {
+                                if (imageFile != null) {
+                                  String sqlLiteImageUrl = await databaseService
+                                      .convertImageIntoBase64String(imageFile!);
+                                  databaseService.updateImageInSqliteDatabase(
+                                      sqlLiteImageUrl,
+                                      userProfile.login!.uuid!);
+                                }
+                                if (done == 1) {
+                                  final user = await databaseService
+                                      .findUserByUuid(userProfile.login!.uuid!);
+                                  if (user != null) {
+                                    ref
+                                        .read(
+                                            userModelNotifierProvider.notifier)
+                                        .updateUser(user);
+                                    ref
+                                        .read(
+                                            stateOFListOfUsersofSqlite.notifier)
+                                        .updateUser(user, userProfile.email!);
+                                  }
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        " User Profile Updated Successfully",
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              } else {
+                                await uploadImageInFireBase();
+                                UserProfile? user =
+                                    await UserRepository.updateUserInfo(
+                                        userProfile,
+                                        userProfile.email!,
+                                        firstNameController.text,
+                                        lastNameController.text,
+                                        emailController.text,
+                                        phoneNocontroller.text.toString(),
+                                        passwordController.text.toString(),
+                                        uploadedImageUrl,
+                                        ref,
+                                        latitueController.text.toString(),
+                                        longitudeCOntroller.text.toString(),
+                                        context);
                                 ref
                                     .read(userModelNotifierProvider.notifier)
-                                    .updateUser(user);
+                                    .updateUser(user!);
                               }
 
                               setState(() {
                                 isLoading = false;
                               });
-                              Navigator.of(context).pop();
+
+                              Future.delayed(const Duration(seconds: 1), () {
+                                if (context.mounted) {
+                                  Navigator.of(context).pop();
+                                }
+                              });
+
                               imageFile = null;
                               imageUrl = null;
                             },
                             child: isLoading == true
                                 ? const CircularProgressIndicator()
-                                : const Text("Update Profile"),
+                                : widget.number == 1
+                                    ? const Text("Update Profile to Firebase")
+                                    : const Text("Update Profile to Sqlite"),
                           ),
                         ),
                       ],

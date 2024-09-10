@@ -23,6 +23,7 @@ class ApiUserNotifier extends StateNotifier<List<UserProfile>> {
      
       }
     } catch (e) {
+      // ignore: avoid_print
       print(e);
   
     }

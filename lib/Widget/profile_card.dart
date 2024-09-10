@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +14,20 @@ class ProfileCard extends StatelessWidget {
       required this.onImportPress,
       required this.delete,
       required this.requireImportButton});
+
+  bool checkNetworkImage(String imageUrl) {
+    return imageUrl.startsWith('http');
+  }
+
+  bool checkImageIsBase64Encode(String imageUrl) {
+    if (imageUrl.startsWith('/')) {
+
+      
+      return true;
+    }
+    return false;
+  }
+
   final String imagePath;
   final String name;
   final String email;
@@ -36,12 +53,21 @@ class ProfileCard extends StatelessWidget {
             Row(
               children: [
                 ClipOval(
-                  child: Image.network(
-                    imagePath,
-                    height: 65,
-                    width: 65,
-                    fit: BoxFit.cover,
-                  ),
+                  child: checkNetworkImage(imagePath)
+                      ? Image.network(
+                          imagePath,
+                          height: 65,
+                          width: 65,
+                          fit: BoxFit.cover,
+                        )
+                      : checkImageIsBase64Encode(imagePath)
+                          ? Image.memory(
+                              base64Decode(imagePath),
+                              height: 65,
+                              width: 65,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.file(File(imagePath)),
                 ),
                 const SizedBox(
                   width: 10,

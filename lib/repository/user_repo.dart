@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:task_4/Models/User/location.dart';
 import 'package:task_4/Models/User/user.dart';
 import 'package:task_4/provider/user_notifier_provider.dart';
 
@@ -56,6 +57,8 @@ class UserRepository {
       String? passWord,
       String? imageUrl,
       WidgetRef ref,
+      String latitude,
+      String longitude,
       BuildContext context) async {
     UserProfile? newUser;
     try {
@@ -73,12 +76,20 @@ class UserRepository {
             firebaseWalaUser.login?.copyWith(password: passWord);
         var updatedProfile =
             firebaseWalaUser.picture?.copyWith(thumbnail: imageUrl);
+        var updatedCoordinates = firebaseWalaUser.location?.coordinates
+            ?.copyWith(
+                latitude: latitude,
+                longitude:longitude);
+        var updatedLocation = firebaseWalaUser.location
+            ?.copyWith(coordinates: updatedCoordinates);
         newUser = firebaseWalaUser.copyWith(
             name: updatedName,
+            location: updatedLocation,
             login: updatedPassword,
             email: updatedEmail,
             phone: updatedPhoneNo,
             picture: updatedProfile);
+
         await firestore
             .collection('Users')
             .doc(userToUpdate.id)
@@ -140,6 +151,57 @@ class UserRepository {
               " User cannot Found Please Import first",
             ),
             duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  static Future<void> upDateUserLocation(
+      UserProfile user, Location updateLocation, BuildContext context) async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> allUsers = await firestore
+          .collection("Users")
+          .where('email', isEqualTo: user.email!)
+          .get();
+      if (allUsers.docs.isNotEmpty) {
+        var userToUpdate = allUsers.docs.first;
+        UserProfile firebaseWalaUser =
+            UserProfile.fromJson(userToUpdate.data());
+        var newUser = firebaseWalaUser.copyWith(location: updateLocation);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                " New Points ${newUser.location?.coordinates?.longitude}",
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        await firestore
+            .collection('Users')
+            .doc(userToUpdate.id)
+            .update(newUser.toMap());
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                " User Location Updated Successfully",
+              ),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              " Error  $e",
+            ),
+            duration: const Duration(seconds: 2),
           ),
         );
       }

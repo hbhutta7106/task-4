@@ -129,7 +129,7 @@ class Coordinates {
   factory Coordinates.fromJson(Map<String, dynamic> json) {
     return Coordinates(
       latitude: json['latitude'],
-      longitude: json['longitude'],
+      longitude:json['longitude'],
     );
   }
 
@@ -138,14 +138,14 @@ class Coordinates {
 
     result.addAll({'latitude': latitude});
 
-    result.addAll({'longitude': longitude});
+    result.addAll({'longitude':longitude});
 
     return result;
   }
 
   Coordinates copyWith({
-    double? latitude,
-    double? longitude,
+    dynamic latitude,
+    dynamic longitude,
   }) {
     return Coordinates(
       latitude: latitude ?? this.latitude,

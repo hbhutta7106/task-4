@@ -1,15 +1,21 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:task_4/Models/User/user.dart';
 import 'package:task_4/Screens/edit_screen.dart';
+import 'package:task_4/Screens/map_screen.dart';
 import 'package:task_4/provider/user_notifier_provider.dart';
 
 // ignore: must_be_immutable
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({
     super.key,
+    required this.number,
   });
+  final int number;
   // UserProfile userProfile;
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -68,10 +74,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       selectedIndex = 3;
       title = "Location points are";
       // ignore: prefer_interpolation_to_compose_strings
-      text = userProfile.location!.coordinates!.latitude!.toString() +
+      text = userProfile.location!.coordinates!.latitude! +
           " " +
-          userProfile.location!.coordinates!.longitude!.toString();
+          userProfile.location!.coordinates!.longitude!;
     });
+
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return const MapScreeen(
+      );
+    }));
   }
 
   void onPressPhoneButton(UserProfile userProfile) {
@@ -90,10 +101,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     });
   }
 
+  bool checkNetworkImage(String imageUrl) {
+    return imageUrl.startsWith('http');
+  }
+
+  bool checkImageIsBase64Encode(String imageUrl) {
+    if (imageUrl.startsWith('/')) {
+      return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     UserProfile userProfile = ref.watch(userModelNotifierProvider);
-
     return Scaffold(
         appBar: AppBar(
           title: const Text("Profile Screen"),
@@ -142,12 +163,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   right: 10,
                   child: TextButton(
                       onPressed: () {
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) {
-                          return EditScreen(
-                            userProfile: userProfile,
-                          );
-                        }));
+                        if (widget.number == 1) {
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return const EditScreen(
+                              number: 1,
+                            );
+                          }));
+                        } else {
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return const EditScreen(
+                              number: 0,
+                            );
+                          }));
+                        }
                       },
                       child: const Text(
                         "Edit",
@@ -166,12 +196,53 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           ClipOval(
-                            child: Image.network(
-                              userProfile.picture!.thumbnail!,
-                              height: 100,
-                              width: 100,
-                              fit: BoxFit.cover,
-                            ),
+                            child: checkNetworkImage(
+                                    userProfile.picture!.thumbnail!)
+                                ? Image.network(
+                                    userProfile.picture!.thumbnail!,
+                                    height: 100,
+                                    width: 100,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, progress) {
+                                      if (progress == null) {
+                                        return child;
+                                      } else {
+                                        return Padding(
+                                          padding: const EdgeInsets.all(10),
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              value: progress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? progress
+                                                          .cumulativeBytesLoaded /
+                                                      (progress
+                                                              .expectedTotalBytes ??
+                                                          1)
+                                                  : null,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                   
+                                      return const Center(
+                                          child: Icon(Icons.error,
+                                              color: Colors.red));
+                                    },
+                                  )
+                                : checkImageIsBase64Encode(
+                                        userProfile.picture!.thumbnail!)
+                                    ? Image.memory(
+                                        base64Decode(
+                                            userProfile.picture!.thumbnail!),
+                                        height: 100,
+                                        width: 100,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.file(
+                                        File(userProfile.picture!.thumbnail!)),
                           ),
                           const SizedBox(
                             height: 15,
@@ -181,7 +252,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             width: 250,
                             child: Column(children: [
                               Text(
-                                selectedIndex == 1 ? "My Name is" : title!,
+                                selectedIndex == 1
+                                    ? "My Name is"
+                                    : selectedIndex == 3
+                                        ? "My Coordinates are"
+                                        : title!,
                                 style: const TextStyle(
                                     overflow: TextOverflow.ellipsis,
                                     fontSize: 15,
@@ -202,7 +277,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         " " +
                                         (userProfile.name?.last ??
                                             'The value is null')
-                                    : text!,
+                                    : selectedIndex == 3
+                                        ? userProfile.location!.coordinates!
+                                                .latitude! +
+                                            " " +
+                                            userProfile.location!.coordinates!
+                                                .longitude!
+                                        : text!,
                                 style: const TextStyle(
                                     fontSize: 18,
                                     overflow: TextOverflow.ellipsis,
